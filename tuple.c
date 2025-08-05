@@ -179,3 +179,107 @@ int main() {
 
     return 0;
 }
+
+#include <stdio.h>
+#include <stdlib.h>
+
+void inputPoly(int *t, int **c, int **e, const char *name) {
+    printf("Enter number of terms in %s polynomial: ", name);
+    scanf("%d", t);
+    *c = malloc(*t * sizeof(int));
+    *e = malloc(*t * sizeof(int));
+    if (!*c || !*e) exit(1);
+    for (int i = 0; i < *t; i++) {
+        printf("Term %d (coeff exponent): ", i + 1);
+        scanf("%d %d", &(*c)[i], &(*e)[i]);
+    }
+}
+
+void displayPoly(int *c, int *e, int t) {
+    for (int i = 0; i < t; i++) {
+        if (c[i] == 0) continue;
+        printf("%dx^%d", c[i], e[i]);
+        if (i < t - 1) printf(" + ");
+    }
+    printf("\n");
+}
+
+void addPoly(int *c1, int *e1, int t1, int *c2, int *e2, int t2) {
+    int *c3 = malloc((t1 + t2) * sizeof(int));
+    int *e3 = malloc((t1 + t2) * sizeof(int));
+    int i = 0, j = 0, k = 0;
+
+    while (i < t1 && j < t2) {
+        if (e1[i] > e2[j]) {
+            c3[k] = c1[i]; e3[k++] = e1[i++];
+        } else if (e1[i] < e2[j]) {
+            c3[k] = c2[j]; e3[k++] = e2[j++];
+        } else {
+            c3[k] = c1[i] + c2[j]; e3[k++] = e1[i]; i++; j++;
+        }
+    }
+    while (i < t1) { c3[k] = c1[i]; e3[k++] = e1[i++]; }
+    while (j < t2) { c3[k] = c2[j]; e3[k++] = e2[j++]; }
+
+    printf("\nSum of Polynomials:\n");
+    displayPoly(c3, e3, k);
+    free(c3); free(e3);
+}
+
+void multiplyPoly(int *c1, int *e1, int t1, int *c2, int *e2, int t2) {
+    int max = t1 * t2;
+    int *ct = malloc(max * sizeof(int));
+    int *et = malloc(max * sizeof(int));
+    int k = 0;
+
+    for (int i = 0; i < t1; i++)
+        for (int j = 0; j < t2; j++) {
+            ct[k] = c1[i] * c2[j];
+            et[k++] = e1[i] + e2[j];
+        }
+
+    int *cf = malloc(k * sizeof(int));
+    int *ef = malloc(k * sizeof(int));
+    int used[100] = {0}, n = 0;
+
+    for (int i = 0; i < k; i++) {
+        if (used[i]) continue;
+        int sum = ct[i];
+        for (int j = i + 1; j < k; j++)
+            if (!used[j] && et[i] == et[j]) {
+                sum += ct[j];
+                used[j] = 1;
+            }
+        cf[n] = sum;
+        ef[n++] = et[i];
+    }
+
+    for (int i = 0; i < n - 1; i++)
+        for (int j = 0; j < n - i - 1; j++)
+            if (ef[j] < ef[j + 1]) {
+                int tmp = ef[j]; ef[j] = ef[j + 1]; ef[j + 1] = tmp;
+                tmp = cf[j]; cf[j] = cf[j + 1]; cf[j + 1] = tmp;
+            }
+
+    printf("\nProduct of Polynomials:\n");
+    displayPoly(cf, ef, n);
+    free(ct); free(et); free(cf); free(ef);
+}
+
+int main() {
+    int *c1, *e1, t1, *c2, *e2, t2;
+    inputPoly(&t1, &c1, &e1, "First");
+    inputPoly(&t2, &c2, &e2, "Second");
+
+    printf("\nFirst Polynomial:\n");
+    displayPoly(c1, e1, t1);
+    printf("Second Polynomial:\n");
+    displayPoly(c2, e2, t2);
+
+    addPoly(c1, e1, t1, c2, e2, t2);
+    multiplyPoly(c1, e1, t1, c2, e2, t2);
+
+    free(c1); free(e1); free(c2); free(e2);
+    return 0;
+}
+ 
